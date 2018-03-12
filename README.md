@@ -1,23 +1,49 @@
 # MusicBot
 
-[![GitHub release](https://img.shields.io/github/release/Just-Some-Bots/MusicBot.svg?style=flat-square)](https://github.com/Just-Some-Bots/MusicBot/wiki)
-[![Python](https://img.shields.io/badge/python-3.5%2C%203.6-blue.svg?style=flat-square)](https://www.python.org/downloads/)
-[![Discord](https://img.shields.io/discord/129489631539494912.svg?style=flat-square)](https://discord.gg/bots)
+##KOR 
 
-MusicBot is the original Discord music bot written for [Python](https://www.python.org "Python homepage") 3.5+, using the [discord.py](https://github.com/Rapptz/discord.py) library. It plays requested songs, from YouTube and other services, into a Discord server (or multiple servers) and if the queue becomes empty it will play through a list of existing songs, if configured to do so. The bot features a permissions system allowing owners to restrict commands to certain people. As well as playing songs, MusicBot is capable of streaming live media into a voice channel (experimental).
+리눅스 서버에서 개인적으로 사용할 용도로 수정했어요
 
-![Main](https://i.imgur.com/EZljY52.png)
+차례대로 따라하시면 되요:
 
-## Setup
-Setting up the MusicBot is relatively painless - just follow one of the [guides](https://github.com/Just-Some-Bots/MusicBot/wiki) we have created for you. After that, you can begin to configure your bot to ensure that it can connect to Discord.
+1) 2개 파일을 수정해주세요; options.ini, permissions.ini
 
-The main configuration file is `config/options.ini`, but is not included. Simply make a copy of `example_options.ini` and rename to `options.ini`. See `example_options.ini` for more information on how to configure it.
+2) 봇을 가동시켜주세요; python3.5 run.py
+
+
+
+- MusicBot에 개인적으로 수정을 가했어요
+- 많은 메소드들을 제거했어요! (특히 권한관련 부분)
+- 추가된 메소드들도 있어요 (유툽에서 검색 & 즉시 재생, 우선재생 등)
+- 사용자가 조작하는 부분들은(특히 명령어들) 대부분 한글로 번역해뒀어요!
+
+### 명령어들
+
+"{접두사} 도움"을 디스코드에서 사용해보세요! {접두사}는 ";"가 기본 설정이에요
+
+요청이 있으면 업데이트 할께요
+
+-------------------------------
+
+##ENG
+
+Modified for personal use in Linux Server
+
+Follow the instruction to run a bot:
+
+Step1) edit 2 files; options.ini and permissions.ini
+
+Step2) run the file; python3.5 run.py
+
+
+
+- Personal Customization applied to MusicBot
+- Removed plenty of methods (Especially Permission Part)
+- Added some methods (Search in ytb & play immediately, Pre-queueing)
+- Translated most of the interactive parts(Commands especially) to KR
 
 ### Commands
 
-There are many commands that can be used with the bot. Most notably, the `play <url>` command (preceded by your command prefix) will download, process, and play a song from YouTube or a similar site. A full list of commands are available [here](https://github.com/Just-Some-Bots/MusicBot/wiki/Commands "Commands").
+Try "{command_prefix} help" in a discord. {command_prefix} is ";" in default
 
-### Further reading
-
-* [Support Discord server](https://discord.gg/bots)
-* [Project license](LICENSE)
+Will be updated if there is a request

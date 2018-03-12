@@ -3,6 +3,11 @@ import asyncio
 import logging
 import functools
 import youtube_dl
+#for custom search
+import re
+import urllib.request
+import html
+import json
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -20,7 +25,9 @@ ytdl_format_options = {
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'usenetrc': True
+    'usenetrc': True,
+    'socket_timeout': 1,
+    'retries': 100
 }
 
 # Fuck your useless bugreports message that gets two link embeds and confuses users
@@ -85,3 +92,42 @@ class Downloader:
 
     async def safe_extract_info(self, loop, *args, **kwargs):
         return await loop.run_in_executor(self.thread_pool, functools.partial(self.safe_ytdl.extract_info, *args, **kwargs))
+
+    ########################
+    #  Custom tools
+    ########################
+    async def dev_ytbsearch_custom(self, loop, *args, on_error=None, retry_on_error=False, **kwargs):
+        # &sp=CAM%253D 는 조회수 기준 정렬
+        ytbsearchprefix="https://www.youtube.com/results?search_query="
+        # 5개씩 searching 강제임니돠
+        val = 5
+
+        query = urllib.parse.quote_plus(" ".join(list(urllib.parse.unquote(x) for x in args)))
+        request = urllib.request.Request(ytbsearchprefix + query)
+        response = urllib.request.urlopen(request)
+        rescode = response.getcode()
+        response_body = " "
+        if (rescode == 200):
+            response_body = response.read()
+        else:
+            return None   
+        response_str = str(response_body,"utf-8")
+        if(response_str == " "):
+            return None
+        response_str = html.unescape(response_str)
+        cut1 = 'item-section'
+        cut2 = 'branded-page-box search-pager'
+        response_str = response_str.split(cut1)[2].split(cut2)[0]
+        if(response_str == ''):
+            return None
+        regstr = '(?<=yt-lockup-title ").*?["](.*?)["].*?(?<=title=")(.*?)["].*?(?=<span).*?[>].*?(?<=이: )(.*?)[<]'
+        pattern = re.compile(regstr)
+        it = pattern.finditer(response_str)
+        resultlst = []
+        while len(resultlst) < 5 :
+            tup = it.__next__().groups()
+            splitted = tup[2].split(':')
+            if len(splitted) == 3 and int(splitted[0]) > 5:
+                continue
+            resultlst += [tup]
+        return resultlst

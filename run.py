@@ -7,7 +7,7 @@ import logging
 import tempfile
 import traceback
 import subprocess
-
+os.chdir('/'.join(os.path.abspath(__file__).split('/')[:-1]))
 from shutil import disk_usage, rmtree
 
 try:
@@ -15,16 +15,6 @@ try:
     import importlib.util
 except ImportError:
     pass
-
-
-class GIT(object):
-    @classmethod
-    def works(cls):
-        try:
-            return bool(subprocess.check_output('git --version', shell=True))
-        except:
-            return False
-
 
 class PIP(object):
     @classmethod
@@ -279,7 +269,6 @@ def req_ensure_env():
     try:
         assert os.path.isdir('config'), 'folder "config" not found'
         assert os.path.isdir('musicbot'), 'folder "musicbot" not found'
-        assert os.path.isdir('.git'), 'bot was not installed using Git. If you downloaded a ZIP, you did it wrong. Open http://bit.ly/dmbguide on your browser for official install steps.'
         assert os.path.isfile('musicbot/__init__.py'), 'musicbot folder is not a Python module'
 
         assert importlib.util.find_spec('musicbot'), "musicbot module is not importable"
@@ -313,12 +302,12 @@ def opt_check_disk_space(warnlimit_mb=200):
 
 #################################################
 
-def pyexec(pycom, *args, pycom2=None):
+def pyexec(pycom, *args, pycom2='python3'):
     pycom2 = pycom2 or pycom
     os.execlp(pycom, pycom2, *args)
 
 def restart(*args):
-    pyexec(sys.executable, *args, *sys.argv, pycom2='python')
+    pyexec(sys.executable, *args, *sys.argv, pycom2='python3')
 
 
 def main():
