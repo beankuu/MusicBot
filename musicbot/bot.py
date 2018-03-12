@@ -1,49 +1,43 @@
-import os
-import sys
-import time
-import shlex
-import shutil
-import random
+import asyncio
 import inspect
 import logging
-import asyncio
-import pathlib
-import traceback
 import math
+import os
+import pathlib
+import random
 import re
-
-import aiohttp
-import discord
-import colorlog
+import shlex
+import shutil
+import sys
+import time
+import traceback
 #########
 ##custom
 import urllib.parse
+from collections import defaultdict
+from datetime import timedelta
+from functools import wraps
 ##
 ########
 from io import BytesIO, StringIO
-from functools import wraps
 from textwrap import dedent
-from datetime import timedelta
-from collections import defaultdict
 
+import aiohttp
+import colorlog
+import discord
 from discord.enums import ChannelType
 from discord.ext.commands.bot import _get_variable
 
-
-from . import exceptions
-from . import downloader
-
-from .playlist import Playlist
-from .player import MusicPlayer
+from . import downloader, exceptions
+from .config import Config, ConfigDefaults
+from .constants import VERSION as BOTVERSION
+from .constants import AUDIO_CACHE_PATH, DISCORD_MSG_CHAR_LIMIT
+from .constructs import Response, SkipState, VoiceStateUpdate
 from .entry import StreamPlaylistEntry
 from .opus_loader import load_opus_lib
-from .config import Config, ConfigDefaults
-from .constructs import SkipState, Response, VoiceStateUpdate
-from .utils import load_file, write_file, fixg, ftimedelta, _func_
-
-from .constants import VERSION as BOTVERSION
-from .constants import DISCORD_MSG_CHAR_LIMIT, AUDIO_CACHE_PATH
-
+from .player import MusicPlayer
+from .playlist import Playlist
+from .utils import _func_, fixg, ftimedelta, load_file, write_file
 
 load_opus_lib()
 
@@ -2388,23 +2382,6 @@ class MusicBot(discord.Client):
         return Response(msg, delete_after=10)
     cmd_도움2 = cmd_처음
 
-    async def cmd_고마워(self, author):
-        """
-
-        사용법:
-            {command_prefix}고마워
-        별칭:
-            {command_prefix}땡큐, {command_prefix}잘했어
-        
-        예시:
-            {command_prefix}고마워
-
-        두려워 말게! 빛이 함께할지니! ***!    - 을 말해줄거라네!
-        """
-        return Response('두려워 말게. 빛이 함께할지니 %s!'%author, delete_after=10)
-    cmd_잘했어 = cmd_땡큐 = cmd_고마워
-
-
     async def cmd_안녕(self, author):
         """
 
@@ -2556,7 +2533,7 @@ class MusicBot(discord.Client):
             {command_prefix}옥시크린  [갯수]
 
         별칭:
-            {command_prefix}마동석, {command_prefix}슈퍼클리너, {command_prefix}슈퍼크리너
+            {command_prefix}옥시싹싹, {command_prefix}슈퍼클리너, {command_prefix}슈퍼크리너
 
         예시:
             {command_prefix}옥시크린  
@@ -2613,7 +2590,7 @@ class MusicBot(discord.Client):
                         pass
 
         return Response('{} 개 대화를 삭제했다네{}.'.format(deleted, ' ' * bool(deleted)), delete_after=6)
-    cmd_슈퍼크리너 = cmd_슈퍼클리너 = cmd_마동석 = cmd_옥시크린
+    cmd_슈퍼크리너 = cmd_슈퍼클리너 = cmd_옥시싹싹 = cmd_옥시크린
     
 
     @owner_only
@@ -2628,12 +2605,12 @@ class MusicBot(discord.Client):
             {command_prefix}초강력옥시크린  [갯수]
 
         별칭:
-            {command_prefix}울트라크리너, {command_prefix}울트라클리너
+            {command_prefix}초강력옥시싹싹, {command_prefix}울트라크리너
 
         예시:
             {command_prefix}초강력옥시크린  
             {command_prefix}초강력옥시크린  20
-
+크
         메세지를 가장 최근 메세지부터 차례대로 지워준다네!
         기본 [갯수]는 10개라네. 최대 1000까지 가능은 한데 부담이 심할거라네.
 
@@ -2673,154 +2650,15 @@ class MusicBot(discord.Client):
                     pass
 
         return Response('{} 개 대화를 삭제했다네{}.'.format(deleted, ' ' * bool(deleted)), delete_after=6)
-    cmd_울트라크리너 = cmd_울트라클리너 = cmd_초강력옥시크린
+    cmd_울트라크리너 = cmd_초강력옥시싹싹 = cmd_초강력옥시크린
 
-
-    #TESTING 기능이긴한데 음.
     async def cmd_1(self):
         '''
-        불만제로를 위한 임시명령어야!
+        임시처방이야!
         노래 선택할때 쓰면될꺼야!
         '''
         pass
     cmd_5=cmd_4=cmd_3=cmd_2=cmd_1
-
-    async def cmd_반야심경(self, player, channel, author):
-        '''
-        마햐바햐 사하심 
-        아시아시 로시 사바라 
-        <마야바야 할아비타 신규>x2 
-        관그네 보살 빛나라햣 
-        다시궁 보내고 유지보해 하이야 신구 
-        이궁 궁궁이겡 신구 이궁 관기게 수사정신 
-        연통 비시미 하이자 시고 비황 
-        불땐 불든 태애우든 풍을 
-        감추고 있고든 
-        고추참치 두마리 사시미 
-        퐁무무색 성당 민첩법 
-        우왕의 색이 누구 쉽게 되는냐 
-        현무 니형이 내지는 항상 
-        현무야 무지 발동 너희의 무도 
-        고지 발동 고자차도 현차라 미차도 
-        신유라에 무애고 우유먹고 
-        번쩍들고 공사라 군육들고 상대 
-        개구리 자잡아삘라 
-        고등어 따라 산등산등 고등이 
-        하마하마가 좋다 
-        기에 이에 신에 이에 상조 인해 상조 인해 인육 
-        금지가 힘들고 진심 울어보삼 
-        하마하마가 좋다고 정말 좋아 
-        <마야바야 사하심 
-        아시아시 로시 사바라>x3 
-        삐리 삐리 삐리삐삐 삐리삐리 삐리리리
-        '''
-        await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=df9_a4ySCcE')
-    async def cmd_함정카드(self, player, channel, author):
-        '''
-        원곡: 열정적인 듀얼리스트
-        '''
-        await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=8kPsjsk0h9A')
-    from random import randint
-    async def cmd_방구테마곡(self, player, channel, author):
-        '''
-        곡: 
-        Yee
-        랜덤 곡:
-        [웅진씽크빅] 2007년 TVCF - 세종대왕 퐁퐁퐁편(20초)
-        [웅진씽크빅] 2004년 TVCF - 뮤지컬(유준상)
-        웅진씽크빅 위인캉캉
-        '''
-        await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=q6EoRBvdVPQ')
-        select = random.randint(0, 2)
-        if(select == 0):
-            await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=RMwUgQ96jvE')
-        elif(select == 1):
-            await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=EWiIRqHut1E')
-        elif(select == 2):
-            await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=xCl1y1HO6-o')
-        
-    cmd_방구 = cmd_방구테마곡
-    async def cmd_로동테마곡(self, player, channel, author):
-        '''
-        곡: 
-        태진아 - 아줌마
-        김연자 - 10분내로
-        남진, 장윤정 - 당신이 좋아
-        오승근 - 내나이가 어때서
-        '''
-        
-        await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=ysQE_YIPFwU')
-        select = random.randint(0, 2)
-        if(select == 0):
-            await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=S6481XCycqw')
-        elif(select == 1):
-            await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=mQP-DUoM8Vg')
-        elif(select == 2):
-            await self.cmd_oldplay(player, channel, author, [], song_url = 'https://www.youtube.com/watch?v=szi6-XzIuNA')
-        
-    cmd_로동 = cmd_로동테마곡
-    async def cmd_광고(self, player, channel, author):
-        '''
-        랜덤 곡 목록: 
-        1) 2015 오로나민C TV CF / 강민경 전현무
-        2) 2011 우루사 간 때문이야 1차 TV광고
-        3) 포카리스웨트 CF - 종소리 편 (2001)
-        4) [Big Mac Chant] [빅맥 TV광고] 사무실
-        5) 서울사이버대학 CM송
-        6) '앞뒤가 똑같은 대리운전' 1577-1577
-        7) 신동엽의 다함께 쿠차차! 중독성 최고!
-        8) 쇼곱하기
-        9) SK텔레콤 비비디바비디부 (Org/30s)
-        10) 새우깡 CF - 손이가요 손이가 편 (1991)
-        11) 2015 크리넥스 마이비데 TVC - 시보편
-        12) 샘표_연두_TV광고_떡만두국편_15초
-        13) 롯데리아 크랩버거
-        === 옛날 광고 ===
-        14) 빙그레 3시라면 - 김병조 (1986년)
-        15) 빙그레 출발5분전 - 김병조 (1986년)
-        16) [한국 고전 광고 영상] 대우 세탁기 예예 1988
-        17) 대우IC냉장고 투투 1989
-        18) 짜파게티 CF - 일요일은 짜파게티 먹는 날 편 (1988)
-        19) 1980 삼양라면
-        '''
-        cmlist = [
-            'https://www.youtube.com/watch?v=pMurz6YWfgM',
-            'https://www.youtube.com/watch?v=ULY5Y3yLpLI',
-            'https://www.youtube.com/watch?v=cSkOBfi2nB4-o',
-            'https://www.youtube.com/watch?v=C9EWEqbC13M',
-            'https://www.youtube.com/watch?v=DubQou9-jXY',
-            'https://www.youtube.com/watch?v=oakeUkVubpM',
-            'https://www.youtube.com/watch?v=IFIsvpnWSM',
-            'https://www.youtube.com/watch?v=OgvCD_31dO4',
-            'https://www.youtube.com/watch?v=4bfJk5wDHV8',
-            'https://www.youtube.com/watch?v=UEUcG3w1X5M',
-            'https://www.youtube.com/watch?v=D-Tqt1ip7W8',
-            'https://www.youtube.com/watch?v=EY5HcYAZA-k',
-            'https://www.youtube.com/watch?v=Z8jkXTZPz4c',
-
-            'https://www.youtube.com/watch?v=xjS5SPzEZVw',
-            'https://www.youtube.com/watch?v=9CrpmqUhN90',
-            'https://www.youtube.com/watch?v=8uiYf0A8efE',
-            'https://www.youtube.com/watch?v=FYKbAlkBPg',
-            'https://www.youtube.com/watch?v=B5O0jVwfRgg',
-            'https://www.youtube.com/watch?v=RsFuNd4wj_g',
-        ]
-        select = random.randint(0, len(cmlist)-1)
-        await self.cmd_oldplay(player, channel, author, [], song_url = cmlist[select])
-        
-    cmd_쉬어가기 = cmd_CF송 = cmd_CM송 = cmd_광고
-
-
-
-
-
-
-
-
-
-
-
-
 
     ######
     #긴것들
